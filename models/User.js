@@ -7,7 +7,7 @@ const collegeUserSchema = new mongoose.Schema(
         email: {type: String, required: true,lowercase: true, unique: true},
         contact: {type: String,match: /^\d{10}$/},
         gender: {type: String,enum: ["male", "female", "other"]},
-        role: {type: String, enum: ["admin", "hod", "tutor", "staff", "student"], required: true},
+        role: {type: String, enum: ["admin", "hod", "tutor", "staff", "student"], required: true , default : 'admin'},
         password: {type: String, required: true},
 
         department: { type: String },
