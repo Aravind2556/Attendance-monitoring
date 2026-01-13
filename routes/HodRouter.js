@@ -2,7 +2,7 @@ const express = require("express");
 const Timetable = require('../models/TimeTable');
 const isAuth = require("../middleware/isAuth");
 const TimeTable = require("../models/TimeTable");
-const User = require("../models/User");
+const UserModel = require("../models/User");
 
 const router = express.Router();
 
@@ -239,22 +239,34 @@ router.get('/fetch-staff', isAuth, async (req, res) => {
 
 router.get('/fetch-students', isAuth, async (req, res) => {
     try {
-
         const fetchStuents = await User.find({ role: 'student' })
-
-
         if (!fetchStuents) {
             return res.status(404).json({ success: false, message: "No Student found" });
         }
-
-        return res.status(200).json({
-            success: true,
-            message: "HOD Students fetched",
-            students: fetchStuents
-        });
+        return res.status(200).json({success: true,message: "HOD Students fetched",students: fetchStuents});
 
     } catch (err) {
         console.log("Students fetch error:", err);
         return res.status(500).json({ success: false, message: "Failed to load Students" });
     }
 })
+
+
+router.get("/fetchHod", async (req, res) => {
+    try {
+        const findHod = await UserModel.find({role: "hod"})
+        return res.json({ success: true, count: findHod.length, hods: findHod});
+
+    } catch (err) {
+        console.log("HOD fetch error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to load HODs"
+        });
+    }
+});
+
+
+
+
+module.exports = router
