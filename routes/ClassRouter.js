@@ -6,15 +6,10 @@ const router = express.Router();
 router.post("/createClass", async (req, res) => {
     try {
         const { section, number, department, year } = req.body;
-
-        console.log("section, number, department, year", section, number, department, year)
-       
         if (!section || !number || !department || !year) {
             return res.status(400).json({success: false,message: "All fields are required"});
         }
-
-        const existingClass = await ClassModel.findOne({section, number,department,year});
-
+        const existingClass = await ClassModel.findOne({ number });
         if (existingClass) {
             return res.status(409).json({success: false,message: "Class already exists"});
         }

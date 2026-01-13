@@ -1,5 +1,6 @@
 const express = require("express");
 const Department = require("../models/Department");
+const UserModel = require("../models/User")
 
 const router = express.Router();
 
@@ -20,17 +21,33 @@ router.post("/createDepartment", async (req, res) => {
     }
 });
 
+// router.get("/fetchDepartment", async (req, res) => {
+//     try {
+//         const departments = await Department.find({});
+//         if(!departments){
+//           return res.json({success : false , message : ""})
+//         }
+//         const fetchUser = await UserModel.find({})
+
+
+//         return res.json({ success: true, count: departments.length, departments });
+//     } catch (error) {
+//         return res.status(500).json({success: false,message: "Server error"});
+//     }
+// });
+
+
 router.get("/fetchDepartment", async (req, res) => {
     try {
-        const departments = await Department.find({});
-        if(!departments){
-          return res.json({success : false , message : ""})
-        }
-        return res.json({ success: true, count: departments.length, departments });
+        const usedDepartments = await UserModel.distinct("department");
+        const departments = await Department.find({_id: { $nin: usedDepartments }});
+        return res.json({success: true,count: departments.length,departments});
     } catch (error) {
+        console.error("fetchDepartment error:", error);
         return res.status(500).json({success: false,message: "Server error"});
     }
 });
+
 
 router.put("/updateDepartment/:id", async (req, res) => {
     try {
