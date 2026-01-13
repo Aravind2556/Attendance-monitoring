@@ -173,9 +173,15 @@ AuthRouter.post("/register", async (req, res) => {
             });
         }
 
-        // 3️⃣ Generate incremental ID
-        const lastUser = await UserModel.findOne().sort({ createdAt: -1 });
-        const userId = lastUser ? lastUser.id + 1 : 1;
+
+                let Users = await UserModel.find({});
+                let userId;
+                if (Users.length > 0) {
+                    let last_user = Users.slice(-1)[0];
+                    userId = last_user.id + 1;
+                } else {
+                    userId = 1
+                }
 
         // 4️⃣ Base user object
         const newUser = {

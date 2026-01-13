@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const collegeUserSchema = new mongoose.Schema(
     {
-        id: { type: String, required: true, unique: true },
+        id: { type: Number, required: true, unique: true },
         fullname: { type: String, required: true, trim: true },
         email: { type: String, required: true, lowercase: true, unique: true },
         contact: { type: String, match: /^\d{10}$/ },
