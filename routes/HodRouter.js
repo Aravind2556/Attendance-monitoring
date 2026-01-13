@@ -2,8 +2,7 @@ const express = require("express");
 const Timetable = require('../models/TimeTable');
 const isAuth = require("../middleware/isAuth");
 const TimeTable = require("../models/TimeTable");
-const UserModel = require('../models/User')
-const ClassModel = require('../models/Class')
+const User = require("../models/User");
 
 const router = express.Router();
 
@@ -14,8 +13,17 @@ router.post('/create-timetable', isAuth, async (req, res) => {
         if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
             return res.status(402).send({ success: false, message: "All fileds are required" })
 
+        const fetchStaff = await User.findOne({ _id: staff })
+
+        if (!fetchStaff)
+            return res.status(402).send({ success: false, message: "Staff not saved" })
+
+
         const newTable = await Timetable({
-            day, periodNo, startTime, endTime, year, class: classes, subject, staff
+            day, periodNo, startTime, endTime, year, class: classes, subject, staff: {
+                id: fetchStaff._id,
+                name: fetchStaff.name
+            }
         })
 
         const saveTimetable = await newTable.save()
@@ -132,6 +140,10 @@ router.post('/timetable/:id', isAuth, async (req, res) => {
         if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
             return res.status(402).send({ success: false, message: "All fileds are required" })
 
+        const fetchStaff = await User.findOne({ _id: staff })
+
+        if (!fetchStaff)
+            return res.status(402).send({ success: false, message: "Staff not saved" })
 
         const isTimePresent = await TimeTable.findOne({ _id: id })
 
@@ -140,7 +152,10 @@ router.post('/timetable/:id', isAuth, async (req, res) => {
 
         const updateTime = await TimeTable.findOneAndUpdate({ _id: id }, {
             $set: {
-                day, periodNo, startTime, endTime, year, class: classes, subject, staff
+                day, periodNo, startTime, endTime, year, class: classes, subject, staff: {
+                    id: fetchStaff._id,
+                    name: fetchStaff.name
+                }
             }
         }, {
             new: true
@@ -199,29 +214,47 @@ router.get('/fetch-stafftimetable', isAuth, async (req, res) => {
 });
 
 
-
-router.post("/createHod", async (req, res) => {
+router.get('/fetch-staff', isAuth, async (req, res) => {
     try {
-        const {fullname,contact,email, password,gender,department } = req.body;
-        console.log("user account", fullname, contact, email, password, gender, department)
-        if (!fullname || !contact || !email || !password || !gender || !department) {
-            return res.status(400).json({success: false,message: "Year is required"});
-        }
-        const exist = await UserModel.findOne({ email });
-        if (exist) { 
-            return res.status(409).json({success: false,message: "Year already exists"});
+
+        const fetchStaff = await User.find({ role: 'staff' })
+
+
+        if (!fetchStaff) {
+            return res.status(404).json({ success: false, message: "No Staff found" });
         }
 
-        const findClasses = await ClassModel.find({ department : String(department) })
-        if (!findClasses){
-            return res.status(409).json({ success: false, message: "Year already exists" });
-        }
+        return res.status(200).json({
+            success: true,
+            message: "HOD Staff fetched",
+            staff: fetchStaff
+        });
 
-    
-    } catch (error) {
-        return res.status(500).json({success: false,message: "Server error",error: error.message});
+    } catch (err) {
+        console.log("Timetable fetch error:", err);
+        return res.status(500).json({ success: false, message: "Failed to load timetable" });
+
     }
-});
+})
+
+router.get('/fetch-students', isAuth, async (req, res) => {
+    try {
+
+        const fetchStuents = await User.find({ role: 'student' })
 
 
-module.exports = router
+        if (!fetchStuents) {
+            return res.status(404).json({ success: false, message: "No Student found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "HOD Students fetched",
+            students: fetchStuents
+        });
+
+    } catch (err) {
+        console.log("Students fetch error:", err);
+        return res.status(500).json({ success: false, message: "Failed to load Students" });
+    }
+})
