@@ -258,3 +258,5 @@ router.get('/fetch-students', isAuth, async (req, res) => {
         return res.status(500).json({ success: false, message: "Failed to load Students" });
     }
 })
+
+module.exports = router

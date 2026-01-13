@@ -148,6 +148,8 @@ AuthRouter.post("/register", async (req, res) => {
             parentEmail,
             parentContact,
             isTutor,
+            classes,
+            year
         } = req.body;
 
         // 1️⃣ Validation
@@ -213,8 +215,11 @@ AuthRouter.post("/register", async (req, res) => {
         if (parentContact) newUser.parentContact = parentContact;
         if (isTutor) newUser.isTutor = isTutor;
 
+        if (classes) newUser.class = classes
+        if (year) newUser.year = year
+
         if (req.session?.user?.role === "admin") {
-            newUser.isHod = true; 
+            newUser.isHod = true;
             if (Array.isArray(classIds)) newUser.class = classIds;
             if (Array.isArray(yearIds)) newUser.year = yearIds;
         }
