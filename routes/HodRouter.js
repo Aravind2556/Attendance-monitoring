@@ -233,9 +233,9 @@ router.get('/fetch-staff', isAuth, async (req, res) => {
     } catch (err) {
         console.log("Timetable fetch error:", err);
         return res.status(500).json({ success: false, message: "Failed to load timetable" });
-    }
-});
 
+    }
+})
 
 router.get('/fetch-students', isAuth, async (req, res) => {
     try {

@@ -10,10 +10,7 @@ const collegeUserSchema = new mongoose.Schema(
         role: { type: String, enum: ["admin", "hod", "tutor", "staff", "student"], required: true, default: 'admin' },
         password: { type: String, required: true },
 
-        department: {
-            id: { type: String },
-            name: { type: String }
-        },
+        department: { type: String },
         class: [{ type: String }],
         year: [{ type: String }],
 
@@ -23,10 +20,8 @@ const collegeUserSchema = new mongoose.Schema(
         parentContact: { type: String },
 
         // STAFF ONLY
-        employeeId: { type: String },
         isTutor: { type: Boolean, default: false },
         isHod: { type: Boolean, default: false },
-
     },
     { timestamps: true }
 );
