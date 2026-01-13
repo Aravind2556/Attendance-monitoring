@@ -2,6 +2,8 @@ const express = require("express");
 const Timetable = require('../models/TimeTable');
 const isAuth = require("../middleware/isAuth");
 const TimeTable = require("../models/TimeTable");
+const UserModel = require('../models/User')
+const ClassModel = require('../models/Class')
 
 const router = express.Router();
 
@@ -195,3 +197,31 @@ router.get('/fetch-stafftimetable', isAuth, async (req, res) => {
         });
     }
 });
+
+
+
+router.post("/createHod", async (req, res) => {
+    try {
+        const {fullname,contact,email, password,gender,department } = req.body;
+        console.log("user account", fullname, contact, email, password, gender, department)
+        if (!fullname || !contact || !email || !password || !gender || !department) {
+            return res.status(400).json({success: false,message: "Year is required"});
+        }
+        const exist = await UserModel.findOne({ email });
+        if (exist) { 
+            return res.status(409).json({success: false,message: "Year already exists"});
+        }
+
+        const findClasses = await ClassModel.find({ department : String(department) })
+        if (!findClasses){
+            return res.status(409).json({ success: false, message: "Year already exists" });
+        }
+
+    
+    } catch (error) {
+        return res.status(500).json({success: false,message: "Server error",error: error.message});
+    }
+});
+
+
+module.exports = router
