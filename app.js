@@ -4,6 +4,8 @@ const Mongoose = require('mongoose');
 const Session = require('express-session');
 const AuthRouter = require('./routes/AuthRouter');
 const DepartmentRouter = require('./routes/DepartmentRouter')
+const YearRouter = require('./routes/YearRouter')
+const ClassRouter = require('./routes/ClassRouter')
 
 
 const MongoDbSession = require('connect-mongodb-session')(Session);
@@ -52,5 +54,7 @@ app.use(Session({
 
 app.use(AuthRouter)
 app.use(DepartmentRouter) 
+app.use(YearRouter)
+app.use(ClassRouter)
 
  
