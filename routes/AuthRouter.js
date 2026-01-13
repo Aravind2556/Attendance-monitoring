@@ -50,9 +50,10 @@ AuthRouter.post('/register', async (req, res) => {
     try {
         const { fullname, email, contact, password, gender, department, classes, year, registerNumber, parentEmail, parentContact, empId, isTutor, isHod } = req.body
 
-        if (!fullname || !email || !contact || !password || gender) {
+        if (!fullname || !email || !contact || !password || !gender) {
             return res.send({ success: false, message: 'Please provide all details!' })
         }
+        console.log(fullname, email, contact, password, gender)
 
         const fetchUser = await UserModel.findOne({ email: email.toLowerCase() })
         if (fetchUser) {
@@ -82,7 +83,7 @@ AuthRouter.post('/register', async (req, res) => {
         else newUser.role = 'admin'
 
 
-        if (depardepartment?.id && department?.nametment) {
+        if (department?.id && department?.name) {
             newUser.department.id = department.id
             newUser.department.name = department.name
         }

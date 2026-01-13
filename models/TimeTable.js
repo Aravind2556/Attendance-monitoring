@@ -9,7 +9,10 @@ const timetableSchema = new mongoose.Schema(
         year: { type: String },
         class: { type: String },
         subject: { type: String },
-        staff: { type: String }
+        staff: {
+            id: { type: String },
+            name:{type:String}
+        }
     },
     { timestamps: true }
 );

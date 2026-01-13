@@ -2,6 +2,7 @@ const express = require("express");
 const Timetable = require('../models/TimeTable');
 const isAuth = require("../middleware/isAuth");
 const TimeTable = require("../models/TimeTable");
+const User = require("../models/User");
 
 const router = express.Router();
 
@@ -12,8 +13,17 @@ router.post('/create-timetable', isAuth, async (req, res) => {
         if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
             return res.status(402).send({ success: false, message: "All fileds are required" })
 
+        const fetchStaff = await User.findOne({ _id: staff })
+
+        if (!fetchStaff)
+            return res.status(402).send({ success: false, message: "Staff not saved" })
+
+
         const newTable = await Timetable({
-            day, periodNo, startTime, endTime, year, class: classes, subject, staff
+            day, periodNo, startTime, endTime, year, class: classes, subject, staff: {
+                id: fetchStaff._id,
+                name: fetchStaff.name
+            }
         })
 
         const saveTimetable = await newTable.save()
@@ -130,6 +140,10 @@ router.post('/timetable/:id', isAuth, async (req, res) => {
         if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
             return res.status(402).send({ success: false, message: "All fileds are required" })
 
+        const fetchStaff = await User.findOne({ _id: staff })
+
+        if (!fetchStaff)
+            return res.status(402).send({ success: false, message: "Staff not saved" })
 
         const isTimePresent = await TimeTable.findOne({ _id: id })
 
@@ -138,7 +152,10 @@ router.post('/timetable/:id', isAuth, async (req, res) => {
 
         const updateTime = await TimeTable.findOneAndUpdate({ _id: id }, {
             $set: {
-                day, periodNo, startTime, endTime, year, class: classes, subject, staff
+                day, periodNo, startTime, endTime, year, class: classes, subject, staff: {
+                    id: fetchStaff._id,
+                    name: fetchStaff.name
+                }
             }
         }, {
             new: true
@@ -195,3 +212,49 @@ router.get('/fetch-stafftimetable', isAuth, async (req, res) => {
         });
     }
 });
+
+
+router.get('/fetch-staff', isAuth, async (req, res) => {
+    try {
+
+        const fetchStaff = await User.find({ role: 'staff' })
+
+
+        if (!fetchStaff) {
+            return res.status(404).json({ success: false, message: "No Staff found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "HOD Staff fetched",
+            staff: fetchStaff
+        });
+
+    } catch (err) {
+        console.log("Timetable fetch error:", err);
+        return res.status(500).json({ success: false, message: "Failed to load timetable" });
+    }
+});
+
+
+router.get('/fetch-students', isAuth, async (req, res) => {
+    try {
+
+        const fetchStuents = await User.find({ role: 'student' })
+
+
+        if (!fetchStuents) {
+            return res.status(404).json({ success: false, message: "No Student found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "HOD Students fetched",
+            students: fetchStuents
+        });
+
+    } catch (err) {
+        console.log("Students fetch error:", err);
+        return res.status(500).json({ success: false, message: "Failed to load Students" });
+    }
+})
