@@ -159,7 +159,7 @@ AuthRouter.post("/register", async (req, res) => {
                 message: "Please provide all required details"
             });
         }
-        console.log(fullname, email, contact, password, gender)
+        console.log(fullname, email, contact, password, gender,classes, year)
 
         // 2️⃣ Check existing user
         const fetchUser = await UserModel.findOne({
