@@ -1,0 +1,197 @@
+const express = require("express");
+const Timetable = require('../models/TimeTable');
+const isAuth = require("../middleware/isAuth");
+const TimeTable = require("../models/TimeTable");
+
+const router = express.Router();
+
+router.post('/create-timetable', isAuth, async (req, res) => {
+    try {
+        const { day, periodNo, startTime, endTime, year, classes, subject, staff } = req.body
+
+        if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
+            return res.status(402).send({ success: false, message: "All fileds are required" })
+
+        const newTable = await Timetable({
+            day, periodNo, startTime, endTime, year, class: classes, subject, staff
+        })
+
+        const saveTimetable = await newTable.save()
+
+        if (!saveTimetable)
+            return res.status(402).send({ success: false, message: "Time Table not saved" })
+
+        return res.status(200).send({ success: true, message: "Time Table saved successfully" })
+
+
+    }
+    catch (err) {
+        console.log("Error in create Timetable:", err)
+        return res.send({ success: false, message: 'Trouble in create Time table! Please contact support Team.' })
+    }
+})
+
+
+router.get('/fetch-timetable', isAuth, async (req, res) => {
+    try {
+        if (req.session.user.role !== "hod") {
+            return res.status(403).json({ success: false, message: "Access denied" });
+        }
+
+        const timetable = await Timetable.aggregate([
+
+            // 1. Sort so periods appear in correct order
+            { $sort: { year: 1, class: 1, day: 1, periodNo: 1 } },
+
+            // 2. Group by year + class + day
+            {
+                $group: {
+                    _id: {
+                        year: "$year",
+                        class: "$class",
+                        day: "$day"
+                    },
+                    periods: {
+                        $push: {
+                            periodNo: "$periodNo",
+                            startTime: "$startTime",
+                            endTime: "$endTime",
+                            subject: "$subject",
+                            staff: "$staff"
+                        }
+                    }
+                }
+            },
+
+            // 3. Group by year + class
+            {
+                $group: {
+                    _id: {
+                        year: "$_id.year",
+                        class: "$_id.class"
+                    },
+                    days: {
+                        $push: {
+                            day: "$_id.day",
+                            periods: "$periods"
+                        }
+                    }
+                }
+            },
+
+            // 4. Group by year
+            {
+                $group: {
+                    _id: "$_id.year",
+                    classes: {
+                        $push: {
+                            class: "$_id.class",
+                            days: "$days"
+                        }
+                    }
+                }
+            },
+
+            // 5. Beautify output
+            {
+                $project: {
+                    _id: 0,
+                    year: "$_id",
+                    classes: 1
+                }
+            }
+        ])
+
+        if (!timetable.length) {
+            return res.status(404).json({ success: false, message: "No Timetable found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "HOD timetable fetched",
+            timetable
+        });
+
+    } catch (err) {
+        console.log("Timetable fetch error:", err);
+        return res.status(500).json({ success: false, message: "Failed to load timetable" });
+    }
+});
+
+router.post('/timetable/:id', isAuth, async (req, res) => {
+    try {
+        const id = req.params.id
+
+        if (!id)
+            return res.status(402).send({ success: false, message: "Id not fetched" })
+
+        const { day, periodNo, startTime, endTime, year, classes, subject, staff } = req.body
+
+        if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
+            return res.status(402).send({ success: false, message: "All fileds are required" })
+
+
+        const isTimePresent = await TimeTable.findOne({ _id: id })
+
+        if (!isTimePresent)
+            return res.status(402).send({ success: false, message: "There is No Timetable for this ID" })
+
+        const updateTime = await TimeTable.findOneAndUpdate({ _id: id }, {
+            $set: {
+                day, periodNo, startTime, endTime, year, class: classes, subject, staff
+            }
+        }, {
+            new: true
+        })
+
+        if (!updateTime)
+            return res.status(400).json({ success: false, message: "Timetable Update Failed. Try again" })
+
+        return res.status(200).json({ success: true, message: "UpdateTimetable  Data Successfully" })
+
+
+    }
+    catch (err) {
+        console.log("Error in Update Timetable:", err)
+        return res.send({ success: false, message: 'Trouble in Update Time table! Please contact support Team.' })
+    }
+})
+
+
+router.get('/fetch-stafftimetable', isAuth, async (req, res) => {
+    try {
+        const staffId = String(req.session.user._id);   // logged in staff
+
+        if (!staffId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const timetable = await Timetable.find(
+            { staff: staffId },
+            { _id: 0, year: 1, class: 1, day: 1, periodNo: 1, subject: 1, startTime: 1, endTime: 1 }
+        ).sort({ year: 1, class: 1, day: 1, periodNo: 1 });
+
+
+        if (!timetable.length) {
+            return res.status(404).json({
+                success: false,
+                message: "No Timetable found for the staff"
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Staff timetable fetched",
+            timetable
+        });
+
+    } catch (err) {
+        console.log("Timetable fetch error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to load timetable"
+        });
+    }
+});

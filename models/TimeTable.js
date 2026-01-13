@@ -6,6 +6,7 @@ const timetableSchema = new mongoose.Schema(
         periodNo: { type: Number, required: true, min: 1, max: 5 },
         startTime: { type: String },
         endTime: { type: String },
+        year: { type: String },
         class: { type: String },
         subject: { type: String },
         staff: { type: String }

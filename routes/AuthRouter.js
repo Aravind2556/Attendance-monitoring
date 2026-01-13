@@ -26,7 +26,8 @@ AuthRouter.post('/login', async (req, res) => {
             fullname: user.fullname,
             email: user.email,
             contact: user.contact,
-            role: user.role
+            role: user.role,
+            department: user.department
         }
 
         req.session.save((err) => {
@@ -77,10 +78,14 @@ AuthRouter.post('/register', async (req, res) => {
         }
         if (req.session.user.role === 'admin') newUser.role = 'hod'
         else if (req.session.user.role === 'hod') newUser.role = 'staff'
-        else newUser.role = 'student'
+        else if (req.session.user.role === 'staff') newUser.role = 'student'
+        else newUser.role = 'admin'
 
 
-        if (department) newUser.department = department
+        if (depardepartment?.id && department?.nametment) {
+            newUser.department.id = department.id
+            newUser.department.name = department.name
+        }
         if (classes) newUser.class = classes
         if (year) newUser.year = year
         if (registerNumber) newUser.registerNumber = registerNumber
@@ -103,6 +108,7 @@ AuthRouter.post('/register', async (req, res) => {
                 email: saveUser.email,
                 contact: saveUser.contact,
                 role: saveUser.role,
+                department: saveUser.department
             }
 
             req.session.save((err) => {
