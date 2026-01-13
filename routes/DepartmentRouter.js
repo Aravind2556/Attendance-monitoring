@@ -20,16 +20,19 @@ router.post("/createDepartment", async (req, res) => {
     }
 });
 
-router.get("/", async (req, res) => {
+router.get("/fetchDepartment", async (req, res) => {
     try {
-        const departments = await Department.find().sort({ name: 1 });
-        res.json({success: true,count: departments.length, departments});
+        const departments = await Department.find({});
+        if(!departments){
+          return res.json({success : false , message : ""})
+        }
+        return res.json({ success: true, count: departments.length, departments });
     } catch (error) {
-        res.status(500).json({success: false,message: "Server error"});
+        return res.status(500).json({success: false,message: "Server error"});
     }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/updateDepartment/:id", async (req, res) => {
     try {
         const { name } = req.body;
         const department = await Department.findByIdAndUpdate(req.params.id,{ name },{ new: true });
@@ -42,7 +45,7 @@ router.put("/:id", async (req, res) => {
     }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/deleteDepartment/:id", async (req, res) => {
     try {
         const department = await Department.findByIdAndDelete(req.params.id);
         if (!department) {
