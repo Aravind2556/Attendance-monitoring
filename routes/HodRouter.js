@@ -6,40 +6,106 @@ const UserModel = require("../models/User");
 
 const router = express.Router();
 
+// router.post('/create-timetable', isAuth, async (req, res) => {
+//     try {
+//         const { day, periodNo, startTime, endTime, year, classes, subject, staff } = req.body
+
+//         console.log("create time table", day, periodNo, startTime, endTime, year, classes, subject, staff)
+
+//         if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
+//             return res.status(402).send({ success: false, message: "All fileds are required" })
+
+//         const fetchStaff = await UserModel.findOne({ _id: staff })
+
+//         if (!fetchStaff)
+//             return res.status(402).send({ success: false, message: "Staff not saved" })
+
+
+//         const newTable = await Timetable({
+//             day, periodNo, startTime, endTime, year, class: classes, subject, staff: {
+//                 id: fetchStaff._id,
+//                 name: fetchStaff.name
+//             }
+//         })
+
+//         const saveTimetable = await newTable.save()
+
+//         if (!saveTimetable)
+//             return res.status(402).send({ success: false, message: "Time Table not saved" })
+
+//         return res.status(200).send({ success: true, message: "Time Table saved successfully" })
+
+
+//     }
+//     catch (err) {
+//         console.log("Error in create Timetable:", err)
+//         return res.send({ success: false, message: 'Trouble in create Time table! Please contact support Team.' })
+//     }
+// })
+
+
 router.post('/create-timetable', isAuth, async (req, res) => {
     try {
-        const { day, periodNo, startTime, endTime, year, classes, subject, staff } = req.body
+        const { day, periodNo, startTime, endTime, year, classes, subject, staff } = req.body;
 
-        if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
-            return res.status(402).send({ success: false, message: "All fileds are required" })
+        console.log("Create Timetable Payload:", req.body);
 
-        const fetchStaff = await User.findOne({ _id: staff })
+        if (
+            !day ||
+            !periodNo ||
+            !startTime ||
+            !endTime ||
+            !year ||
+            !Array.isArray(classes) ||
+            classes.length === 0 ||
+            !subject ||
+            !staff
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required"
+            });
+        }
 
-        if (!fetchStaff)
-            return res.status(402).send({ success: false, message: "Staff not saved" })
+        const fetchStaff = await UserModel.findById(staff);
+        if (!fetchStaff) {
+            return res.status(400).json({
+                success: false,
+                message: "Staff not found"
+            });
+        }
 
-
-        const newTable = await Timetable({
-            day, periodNo, startTime, endTime, year, class: classes, subject, staff: {
+        const newTable = new Timetable({
+            day,
+            periodNo,
+            startTime,
+            endTime,
+            department : req.session.user.department,
+            year,
+            class: classes,
+            subject,
+            staff: {
                 id: fetchStaff._id,
-                name: fetchStaff.name
+                name: fetchStaff.fullname || fetchStaff.name || fetchStaff.email
             }
-        })
+        });
 
-        const saveTimetable = await newTable.save()
+        await newTable.save();
 
-        if (!saveTimetable)
-            return res.status(402).send({ success: false, message: "Time Table not saved" })
+        return res.status(200).json({
+            success: true,
+            message: "Time Table saved successfully"
+        });
 
-        return res.status(200).send({ success: true, message: "Time Table saved successfully" })
-
-
+    } catch (err) {
+        console.error("Error in create Timetable:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Server error while creating timetable"
+        });
     }
-    catch (err) {
-        console.log("Error in create Timetable:", err)
-        return res.send({ success: false, message: 'Trouble in create Time table! Please contact support Team.' })
-    }
-})
+});
+
 
 
 router.get('/fetch-timetable', isAuth, async (req, res) => {
@@ -140,7 +206,7 @@ router.post('/timetable/:id', isAuth, async (req, res) => {
         if (!day || !periodNo || !startTime || !endTime || !year || !classes || !subject || !staff)
             return res.status(402).send({ success: false, message: "All fileds are required" })
 
-        const fetchStaff = await User.findOne({ _id: staff })
+        const fetchStaff = await UserModel.findOne({ _id: staff })
 
         if (!fetchStaff)
             return res.status(402).send({ success: false, message: "Staff not saved" })
@@ -217,7 +283,7 @@ router.get('/fetch-stafftimetable', isAuth, async (req, res) => {
 router.get('/fetch-staff', isAuth, async (req, res) => {
     try {
 
-        const fetchStaff = await User.find({ role: 'staff' })
+        const fetchStaff = await UserModel.find({ role: 'staff' })
 
 
         if (!fetchStaff) {
@@ -239,7 +305,7 @@ router.get('/fetch-staff', isAuth, async (req, res) => {
 
 router.get('/fetch-students', isAuth, async (req, res) => {
     try {
-        const fetchStuents = await User.find({ role: 'student' })
+        const fetchStuents = await UserModel.find({ role: 'student' })
         if (!fetchStuents) {
             return res.status(404).json({ success: false, message: "No Student found" });
         }
@@ -265,6 +331,112 @@ router.get("/fetchHod", async (req, res) => {
         });
     }
 });
+
+
+router.get("/fetchCurrentHod", async (req, res) => {
+    try {
+        console.log("req.session.user._id", req.session.user)
+        const hod = await UserModel.findOne({
+            id: req.session.user.id,
+            role: "hod"
+        })
+
+        if (!hod) {
+            return res.json({
+                success: false,
+                message: "HOD not found"
+            });
+        }
+
+        return res.json({
+            success: true,
+            hod
+        });
+
+    } catch (err) {
+        console.log("HOD fetch error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to load HOD"
+        });
+    }
+});
+
+
+
+
+router.get("/fetchCurrentHodStaffs", async (req, res) => {
+    try {
+        // 🔒 Session check
+        if (!req.session?.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const { role, department } = req.session.user;
+
+        // 🔒 Role must be HOD
+        if (role !== "hod") {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Only HOD can access staff list."
+            });
+        }
+
+        // 🔥 Fetch STAFF + TUTOR under same department
+        const staffs = await UserModel.find({
+            department: department,
+            role: { $in: ["staff", "tutor"] }
+        }).select("-password"); // hide password
+
+        return res.status(200).json({
+            success: true,
+            staffs
+        });
+
+    } catch (err) {
+        console.error("HOD staff fetch error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to load staff"
+        });
+    }
+});
+
+
+router.get("/fetchtimetables", async (req, res) => {
+    try {
+        const { year } = req.query;
+
+        // validation
+        if (!year) {
+            return res.status(400).json({
+                success: false,
+                message: "Year query parameter is required"
+            });
+        }
+
+        // fetch timetable for that year
+        const timetables = await Timetable.find({ year })
+            .sort({ day: 1, periodNo: 1 });
+
+        return res.status(200).json({
+            success: true,
+            timetables
+        });
+
+    } catch (error) {
+        console.error("Fetch timetable error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch timetables"
+        });
+    }
+});
+
+
 
 
 

@@ -1,15 +1,14 @@
 const mongoose = require('mongoose');
-const department = require('./department');
 
 const studentSchema = new mongoose.Schema({
     id: { type: String, unique: true, required: true },
-    studentId : {type : String , unique : true , required : true},
+    entryId : {type : String} ,
+    department : {type : String},
+    class : {type : String},
+    year : {type : String},
     faceEncoding: { type: String },
-    entry : [{
-        entryId : {type : Number},
-        createAt : {type : Number},
-        isPresent : {type : Boolean}
-    }] 
+    createAt : {type : Number},
+    isPresent : {type : Boolean}
 },
     {timestamps: true}
 );

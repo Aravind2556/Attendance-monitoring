@@ -6,7 +6,9 @@ const AuthRouter = require('./routes/AuthRouter');
 const DepartmentRouter = require('./routes/DepartmentRouter')
 const YearRouter = require('./routes/YearRouter')
 const ClassRouter = require('./routes/ClassRouter')
-const HodRouter = require('./routes/HodRouter')
+const HodRouter = require('./routes/HodRouter');
+const { fetchLatestField } = require('./services/fetchThingSpeak');
+
 
 
 const MongoDbSession = require('connect-mongodb-session')(Session);
@@ -58,5 +60,13 @@ app.use(DepartmentRouter)
 app.use(YearRouter)
 app.use(ClassRouter)
 app.use(HodRouter)
+
+// fetch every 10 sec
+setInterval(() => {
+    fetchLatestField();
+}, 1000);
+
+
+
 
  

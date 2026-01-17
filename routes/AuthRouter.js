@@ -159,7 +159,7 @@ AuthRouter.post("/register", async (req, res) => {
                 message: "Please provide all required details"
             });
         }
-        console.log(fullname, email, contact, password, gender,classes, year)
+        console.log(fullname, email, contact, password, gender, classes, year, isTutor)
 
         // 2️⃣ Check existing user
         const fetchUser = await UserModel.findOne({
@@ -174,14 +174,14 @@ AuthRouter.post("/register", async (req, res) => {
         }
 
 
-                let Users = await UserModel.find({});
-                let userId;
-                if (Users.length > 0) {
-                    let last_user = Users.slice(-1)[0];
-                    userId = last_user.id + 1;
-                } else {
-                    userId = 1
-                }
+        let Users = await UserModel.find({}).sort({ id: -1 }).limit(1);
+
+        let userId = 1;
+
+        if (Users.length > 0 && !isNaN(Number(Users[0].id))) {
+            userId = Number(Users[0].id) + 1;
+        }
+
 
         // 4️⃣ Base user object
         const newUser = {
@@ -195,12 +195,20 @@ AuthRouter.post("/register", async (req, res) => {
 
         // 5️⃣ Role assignment (based on creator)
         if (req.session?.user?.role === "admin") newUser.role = "hod";
+        else if (req.session?.user?.role === "hod" && isTutor)  newUser.role = "tutor";
         else if (req.session?.user?.role === "hod") newUser.role = "staff";
-        else if (req.session?.user?.role === "staff") newUser.role = "student";
+        else if (req.session?.user?.role === "tutor") newUser.role = "student";
         else newUser.role = "admin";
 
         // 6️⃣ Optional fields (schema-safe)
-        if (department) newUser.department = department;
+        if (req.session?.user?.role === "admin"){
+            if (department) newUser.department = department;
+        }
+        else{
+            newUser.department = req?.session?.user?.department
+        }
+
+        console.log("req?.session?.user?.department", req?.session?.user?.department)
 
         const findClasses = await ClassModel.find({
             department: String(department)
