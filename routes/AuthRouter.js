@@ -22,8 +22,8 @@ AuthRouter.post('/login', async (req, res) => {
         if (user.password !== password) {
             return res.send({ success: false, message: "Invalid Password!" })
         }
-
         req.session.user = {
+            _id: user._id,
             id: user.id,
             fullname: user.fullname,
             email: user.email,
@@ -36,6 +36,7 @@ AuthRouter.post('/login', async (req, res) => {
             if (err) {
                 return res.send({ success: false, message: "Failed to create session!" })
             }
+            console.log("Userss", req.session.user)
 
             return res.send({ success: true, message: "Logged in successfully!", user: req.session.user })
         })
@@ -195,16 +196,16 @@ AuthRouter.post("/register", async (req, res) => {
 
         // 5️⃣ Role assignment (based on creator)
         if (req.session?.user?.role === "admin") newUser.role = "hod";
-        else if (req.session?.user?.role === "hod" && isTutor)  newUser.role = "tutor";
+        else if (req.session?.user?.role === "hod" && isTutor) newUser.role = "tutor";
         else if (req.session?.user?.role === "hod") newUser.role = "staff";
         else if (req.session?.user?.role === "tutor") newUser.role = "student";
         else newUser.role = "admin";
 
         // 6️⃣ Optional fields (schema-safe)
-        if (req.session?.user?.role === "admin"){
+        if (req.session?.user?.role === "admin") {
             if (department) newUser.department = department;
         }
-        else{
+        else {
             newUser.department = req?.session?.user?.department
         }
 
@@ -238,6 +239,7 @@ AuthRouter.post("/register", async (req, res) => {
             if (Array.isArray(yearIds)) newUser.year = yearIds;
         }
 
+       
         // 7️⃣ Save user
         const saveUser = await UserModel.create(newUser);
 
@@ -281,7 +283,7 @@ AuthRouter.get('/checkauth', async (req, res) => {
     try {
         if (req.session.user) {
 
-            const fetchUser = await UserModel.findOne({ email: req.session.user.email.toLowerCase() }).select("-password -_id")
+            const fetchUser = await UserModel.findOne({ email: req.session.user.email.toLowerCase() }).select("-password")
             if (!fetchUser) {
                 return res.send({ success: false, message: 'User not found!' })
             }

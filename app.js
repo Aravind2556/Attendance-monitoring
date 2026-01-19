@@ -62,9 +62,9 @@ app.use(ClassRouter)
 app.use(HodRouter)
 
 // fetch every 10 sec
-setInterval(() => {
-    fetchLatestField();
-}, 1000);
+// setInterval(() => {
+//     fetchLatestField();
+// }, 1000);
 
 
 

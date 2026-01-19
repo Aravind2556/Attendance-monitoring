@@ -80,7 +80,7 @@ router.post('/create-timetable', isAuth, async (req, res) => {
             periodNo,
             startTime,
             endTime,
-            department : req.session.user.department,
+            department: req.session.user.department,
             year,
             class: classes,
             subject,
@@ -179,7 +179,7 @@ router.get('/fetch-timetable', isAuth, async (req, res) => {
         ])
 
         if (!timetable.length) {
-            return res.status(404).json({ success: false, message: "No Timetable found" });
+            return res.status(403).json({ success: false, message: "No Timetable found" });
         }
 
         return res.status(200).json({
@@ -309,7 +309,7 @@ router.get('/fetch-students', isAuth, async (req, res) => {
         if (!fetchStuents) {
             return res.status(404).json({ success: false, message: "No Student found" });
         }
-        return res.status(200).json({success: true,message: "HOD Students fetched",students: fetchStuents});
+        return res.status(200).json({ success: true, message: "HOD Students fetched", students: fetchStuents });
 
     } catch (err) {
         console.log("Students fetch error:", err);
@@ -320,8 +320,8 @@ router.get('/fetch-students', isAuth, async (req, res) => {
 
 router.get("/fetchHod", async (req, res) => {
     try {
-        const findHod = await UserModel.find({role: "hod"})
-        return res.json({ success: true, count: findHod.length, hods: findHod});
+        const findHod = await UserModel.find({ role: "hod" })
+        return res.json({ success: true, count: findHod.length, hods: findHod });
 
     } catch (err) {
         console.log("HOD fetch error:", err);
@@ -335,16 +335,16 @@ router.get("/fetchHod", async (req, res) => {
 
 router.get("/fetchCurrentHod", async (req, res) => {
     try {
-        console.log("req.session.user._id", req.session.user)
+        console.log("req.session.user._idss", req.session.user)
         const hod = await UserModel.findOne({
-            id: req.session.user.id,
+            _id: req.session.user._id,
             role: "hod"
         })
 
         if (!hod) {
             return res.json({
                 success: false,
-                message: "HOD not found"
+                message: "HOD not found in that CurrentYSesr"
             });
         }
 
