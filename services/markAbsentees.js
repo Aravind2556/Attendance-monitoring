@@ -3,6 +3,7 @@ const UserModel = require("../models/User");
 const Attendance = require("../models/Attendance");
 const Alert = require("../models/Alert");
 const { toDateString } = require("../utils/timeUtils");
+const { sendParentMail } = require("../utils/sendMail");
 
 const markAbsenteesAfter0915 = async () => {
     const now = new Date();
@@ -44,6 +45,12 @@ const markAbsenteesAfter0915 = async () => {
                 class: Array.isArray(stu.class) ? stu.class[0] : stu.class,
                 date: today,
                 reason: "Absent – no entry before 09:15"
+            });
+
+            await sendParentMail({
+                to: stu?.parentEmail,
+                studentName: stu?.fullname,
+                date: today
             });
 
             console.log("ABSENT + ALERT:", stu.fullname);

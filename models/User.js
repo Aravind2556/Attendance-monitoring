@@ -17,7 +17,6 @@ const collegeUserSchema = new mongoose.Schema(
         // STUDENT ONLY
         registerNumber: { type: String },
         parentEmail: { type: String },
-        parentContact: { type: String },
 
         // STAFF ONLY
         isTutor: { type: Boolean, default: false },

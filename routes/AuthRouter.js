@@ -146,7 +146,6 @@ AuthRouter.post("/register", async (req, res) => {
             department,
             registerNumber,
             parentEmail,
-            parentContact,
             isTutor,
             classes,
             year
@@ -226,7 +225,6 @@ AuthRouter.post("/register", async (req, res) => {
 
         if (registerNumber) newUser.registerNumber = registerNumber;
         if (parentEmail) newUser.parentEmail = parentEmail;
-        if (parentContact) newUser.parentContact = parentContact;
         if (isTutor) newUser.isTutor = isTutor;
 
         if (classes) newUser.class = classes
@@ -241,10 +239,10 @@ AuthRouter.post("/register", async (req, res) => {
         // 7️⃣ Save user
         const saveUser = await UserModel.create(newUser);
 
-            if (saveUser) {
+            if (!saveUser) {
                 return res.status(500).json({
                     success: false,
-                    message: "Failed to create session"
+                    message: "Failed to create student"
                 });
             }
 
