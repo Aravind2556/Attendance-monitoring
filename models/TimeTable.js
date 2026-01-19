@@ -8,7 +8,7 @@ const timetableSchema = new mongoose.Schema(
             required: true
         },
         periodNo: { type: Number, required: true, min: 1, max: 5 },
-        startTime: { type: String, required: true }, // "09:00"
+        startTime: { type: String, required: true },
         endTime: { type: String, required: true },
 
         department: String,
@@ -18,14 +18,15 @@ const timetableSchema = new mongoose.Schema(
         subject: String,
 
         staff: {
-            id: String,      
+            id: String,
             name: String,
-            email: String   
+            email: String
         },
 
-        reminderSent: {
-            type: Boolean,
-            default: false
+        // 🔥 DATE BASED FLAG
+        lastReminderDate: {
+            type: String,
+            default: null
         }
     },
     { timestamps: true }
