@@ -86,7 +86,8 @@ router.post('/create-timetable', isAuth, async (req, res) => {
             subject,
             staff: {
                 id: fetchStaff._id,
-                name: fetchStaff.fullname || fetchStaff.name || fetchStaff.email
+                name: fetchStaff.fullname || fetchStaff.name || fetchStaff.email,
+                email: fetchStaff.email
             }
         });
 
