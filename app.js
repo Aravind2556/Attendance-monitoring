@@ -8,8 +8,8 @@ const YearRouter = require('./routes/YearRouter')
 const ClassRouter = require('./routes/ClassRouter')
 const HodRouter = require('./routes/HodRouter');
 const { fetchLatestField } = require('./services/fetchThingSpeak');
-const {markAbsenteesAfter0915} = require('./services/markAbsentees')
-
+const {markAbsenteesAfter0915} = require('./services/markAbsentees');
+const { startStaffPeriodReminder } = require('./services/staffPeriodReminder');
 
 
 const MongoDbSession = require('connect-mongodb-session')(Session);
@@ -70,6 +70,8 @@ setInterval(() => {
 setInterval(() => {
     markAbsenteesAfter0915();
 },1000);
+
+startStaffPeriodReminder();
 
 
 
