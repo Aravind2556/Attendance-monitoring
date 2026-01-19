@@ -1,10 +1,9 @@
 const mongoose = require('mongoose')
 const alertSchema = new mongoose.Schema({
-    studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    studentId: { type: String },
     department: String,
     year: String,
     class: String,
-    periodNo: Number,
     date: { type: Date, default: Date.now },
     reason: String
 });

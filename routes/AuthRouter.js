@@ -241,18 +241,7 @@ AuthRouter.post("/register", async (req, res) => {
         // 7️⃣ Save user
         const saveUser = await UserModel.create(newUser);
 
-        // 8️⃣ Create session
-        req.session.user = {
-            _id: saveUser._id,
-            id: saveUser.id,
-            fullname: saveUser.fullname,
-            email: saveUser.email,
-            role: saveUser.role,
-            department: saveUser.department
-        };
-
-        req.session.save(err => {
-            if (err) {
+            if (saveUser) {
                 return res.status(500).json({
                     success: false,
                     message: "Failed to create session"
@@ -262,10 +251,8 @@ AuthRouter.post("/register", async (req, res) => {
             return res.status(201).json({
                 success: true,
                 message: "User registered successfully",
-                user: req.session.user
             });
-        });
-
+     
     } catch (err) {
         console.error("Error in Register:", err);
         return res.status(500).json({

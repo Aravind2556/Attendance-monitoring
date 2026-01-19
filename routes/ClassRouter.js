@@ -36,7 +36,6 @@ router.post("/createClass", async (req, res) => {
 router.get("/fetchClass", async (req, res) => {
     try {
         const classes = await ClassModel.find({});
-        console.log("classes",classes)
         return res.json({success: true,count: classes.length,classes});
     } catch (error) {
         return res.status(500).json({success: false,message: "Server error"});
@@ -78,6 +77,6 @@ router.delete("/deleteClass/:id", async (req, res) => {
     } catch (error) {
         res.status(500).json({success: false,message: "Server error"});
     }
-});
+}); 
 
 module.exports = router;
