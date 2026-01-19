@@ -3,6 +3,7 @@ const Timetable = require('../models/TimeTable');
 const isAuth = require("../middleware/isAuth");
 const TimeTable = require("../models/TimeTable");
 const UserModel = require("../models/User");
+const Department = require("../models/Department");
 
 const router = express.Router();
 
@@ -299,6 +300,46 @@ router.get('/fetch-staff', isAuth, async (req, res) => {
     } catch (err) {
         console.log("Timetable fetch error:", err);
         return res.status(500).json({ success: false, message: "Failed to load timetable" });
+
+    }
+})
+
+router.get('/staff/:id', isAuth, async (req, res) => {
+    try {
+
+        const id = req.params.id
+
+        if (!id)
+            return res.status(402).send({ success: false, message: "Id not fetched" })
+
+        const fetchStaff = [];
+
+        const staff = await UserModel.findOne({ _id: id });
+        if (!staff) {
+            return res.status(404).json({ success: false, message: "Staff not found" });
+        }
+
+        const department = await Department.findOne({ _id: staff.department });
+
+        fetchStaff.push({
+            staff,
+            department
+        });
+
+        console.log("fetchStaffss", fetchStaff);
+        if (!fetchStaff) {
+            return res.status(404).json({ success: false, message: "No Staff found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "HOD Staff fetched",
+            staff: fetchStaff
+        });
+
+    } catch (err) {
+        console.log("Timetable fetch error:", err);
+        return res.status(500).json({ success: false, message: "Failed to load Staff data" });
 
     }
 })
