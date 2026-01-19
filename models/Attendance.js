@@ -11,6 +11,8 @@ const attendanceSchema = new mongoose.Schema({
     year: { type: String },
     class: { type: String },
 
+    date: { type: String },
+    
     day: { type: String },               // monday
     periodNo: { type: Number },
     entryTime: { type: Date },

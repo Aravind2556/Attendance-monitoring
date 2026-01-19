@@ -1,10 +1,15 @@
-exports.isWithinGraceTime = (startTime, graceMinutes = 5) => {
-    const now = new Date();
-    const [h, m] = startTime.split(":").map(Number);
+// returns true when time is <= 09:15
+exports.isBefore0915 = (date = new Date()) => {
+    const d = new Date(date);
+    const h = d.getHours();
+    const m = d.getMinutes();
+    if (h < 9) return true;
+    if (h === 9 && m <= 15) return true;
+    return false;
+};
 
-    const classTime = new Date();
-    classTime.setHours(h, m, 0, 0);
-
-    const diff = (now - classTime) / 60000;
-    return diff >= 0 && diff <= graceMinutes;
+// helper to get ISO date string YYYY-MM-DD
+exports.toDateString = (date = new Date()) => {
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
 };

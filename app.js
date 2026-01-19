@@ -8,6 +8,7 @@ const YearRouter = require('./routes/YearRouter')
 const ClassRouter = require('./routes/ClassRouter')
 const HodRouter = require('./routes/HodRouter');
 const { fetchLatestField } = require('./services/fetchThingSpeak');
+const {markAbsenteesAfter0915} = require('./services/markAbsentees')
 
 
 
@@ -62,9 +63,13 @@ app.use(ClassRouter)
 app.use(HodRouter)
 
 // fetch every 10 sec
-// setInterval(() => {
-//     fetchLatestField();
-// }, 1000);
+setInterval(() => {
+    fetchLatestField();
+},1000);
+
+setInterval(() => {
+    markAbsenteesAfter0915();
+},1000);
 
 
 

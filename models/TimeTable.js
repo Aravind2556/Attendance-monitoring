@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const timetableSchema = new mongoose.Schema(
     {
-        day: { type: String, enum: ["monday", "yuesday", "wednesday", "hhursday", "friday", "saturday"], required: true },
+        day: { type: String, enum: ["monday", "yuesday", "wednesday", "hhursday", "friday"], required: true },
         periodNo: { type: Number, required: true, min: 1, max: 5 },
         startTime: { type: String },
         endTime: { type: String },
