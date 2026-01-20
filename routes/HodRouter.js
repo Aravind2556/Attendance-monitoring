@@ -441,63 +441,6 @@ router.get('/staff/:id', isAuth, async (req, res) => {
 })
 
 
-router.get('/fetchstudenttimetable', async (req, res) => {
-    try {
-        if (!req.session.user) {
-            return res.status(401).json({
-                success: false,
-                message: "Unauthorized"
-            });
-        }
-
-        // Find logged-in student
-        const student = await UserModel.findOne({
-            _id: req.session.user._id,
-            role: "student"
-        });
-
-        console.log("student", student)
-
-        if (!student) {
-            return res.json({
-                success: false,
-                message: "Student not found"
-            });
-        }
-
-        // Fetch timetable based on student details
-        const timetable = await TimeTable.find({
-            department: student.department,
-
-            year: Array.isArray(student.year)
-                ? { $in: student.year }
-                : student.year,
-
-            classes: {
-                $in: Array.isArray(student.class)
-                    ? student.class
-                    : [student.class]
-            }
-        });
-
-        console.log("timetable", timetable)
-
-
-        return res.json({
-            success: true,
-            timetable
-        });
-
-    } catch (err) {
-        console.log("Timetable fetch error:", err);
-        return res.status(500).json({
-            success: false,
-            message: "Error in fetch student timetable"
-        });
-    }
-});
-
-
 router.get('/fetch-students', isAuth, async (req, res) => {
     try {
         const fetchStuents = await UserModel.find({ role: 'student' })
