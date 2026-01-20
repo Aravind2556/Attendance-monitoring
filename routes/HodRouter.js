@@ -6,6 +6,7 @@ const UserModel = require("../models/User");
 const Department = require("../models/Department");
 const Alert = require("../models/Alert")
 const Year = require('../models/Year')
+const Classes = require('../models/Class')
 
 const router = express.Router();
 
@@ -123,75 +124,30 @@ router.get('/fetch-timetable/:year', isAuth, async (req, res) => {
         const { year } = req.params; // 👈 year from URL
 
         const fetchYear = await Year.findOne({ year: year })
+        if (!fetchYear)
+            return res.status(402).json({
+                success: false, message: "There is no year for this Deptarment"
+            });
 
 
         const timetable = await Timetable.aggregate([
 
-            // 1️⃣ Match year
+            // 🔹 0. FILTER BY YEAR (only change needed)
             {
-                $match: { year }
-            },
-
-            // 2️⃣ Unwind classes array
-            {
-                $unwind: "$classes"
-            },
-
-            // 3️⃣ Convert class string → ObjectId
-            {
-                $addFields: {
-                    classId: { $toObjectId: "$classes" }
+                $match: {
+                    year: String(fetchYear._id)
                 }
             },
 
-            // 4️⃣ Lookup class
-            {
-                $lookup: {
-                    from: "classes",
-                    localField: "classId",
-                    foreignField: "_id",
-                    as: "class"
-                }
-            },
+            // 1. Sort so periods appear in correct order
+            { $sort: { year: 1, classes: 1, day: 1, periodNo: 1 } },
 
-            // 5️⃣ Flatten class array
-            {
-                $unwind: "$class"
-            },
-
-            // 6️⃣ Add weekday order
-            {
-                $addFields: {
-                    dayOrder: {
-                        $switch: {
-                            branches: [
-                                { case: { $eq: ["$day", "monday"] }, then: 1 },
-                                { case: { $eq: ["$day", "tuesday"] }, then: 2 },
-                                { case: { $eq: ["$day", "wednesday"] }, then: 3 },
-                                { case: { $eq: ["$day", "thursday"] }, then: 4 },
-                                { case: { $eq: ["$day", "friday"] }, then: 5 }
-                            ],
-                            default: 99
-                        }
-                    }
-                }
-            },
-
-            // 7️⃣ Sort (Class → Day → Period)
-            {
-                $sort: {
-                    "class.section": 1,
-                    dayOrder: 1,
-                    periodNo: 1
-                }
-            },
-
-            // 8️⃣ Group by Year + Class + Day
+            // 2. Group by year + class + day
             {
                 $group: {
                     _id: {
                         year: "$year",
-                        class: "$class.section",
+                        classes: "$classes",
                         day: "$day"
                     },
                     periods: {
@@ -206,12 +162,12 @@ router.get('/fetch-timetable/:year', isAuth, async (req, res) => {
                 }
             },
 
-            // 9️⃣ Group by Year + Class
+            // 3. Group by year + class
             {
                 $group: {
                     _id: {
                         year: "$_id.year",
-                        class: "$_id.class"
+                        classes: "$_id.classes"
                     },
                     days: {
                         $push: {
@@ -222,20 +178,20 @@ router.get('/fetch-timetable/:year', isAuth, async (req, res) => {
                 }
             },
 
-            // 🔟 Group by Year
+            // 4. Group by year
             {
                 $group: {
                     _id: "$_id.year",
                     classes: {
                         $push: {
-                            class: "$_id.class",
+                            class: "$_id.classes",
                             days: "$days"
                         }
                     }
                 }
             },
 
-            // 1️⃣1️⃣ Final output
+            // 5. Beautify output
             {
                 $project: {
                     _id: 0,
@@ -244,8 +200,6 @@ router.get('/fetch-timetable/:year', isAuth, async (req, res) => {
                 }
             }
         ]);
-
-
         console.log("Timetable is:", timetable)
         if (!timetable.length) {
             return res.status(404).json({ success: false, message: "No Timetable found for this year" });
@@ -310,23 +264,97 @@ router.post('/timetable/:id', isAuth, async (req, res) => {
 })
 
 
-router.get('/fetch-stafftimetable', isAuth, async (req, res) => {
+router.get('/fetch-stafftimetable/:year', isAuth, async (req, res) => {
     try {
         const staffId = String(req.session.user._id);   // logged in staff
-
+        console.log("StaffID", staffId)
         if (!staffId) {
             return res.status(401).json({
                 success: false,
                 message: "Unauthorized"
             });
         }
+        const { year } = req.params; // 👈 year from URL
 
-        const timetable = await Timetable.find(
-            { staff: staffId },
-            { _id: 0, year: 1, class: 1, day: 1, periodNo: 1, subject: 1, startTime: 1, endTime: 1 }
-        ).sort({ year: 1, class: 1, day: 1, periodNo: 1 });
+        const fetchYear = await Year.findOne({ year: year })
+        if (!fetchYear)
+            return res.status(402).json({
+                success: false, message: "There is no year for this Deptarment"
+            });
 
 
+        const timetable = await Timetable.aggregate([
+
+            // 🔹 0. FILTER BY YEAR (only change needed)
+            {
+                $match: {
+                    year: String(fetchYear._id),
+                    'staff.id': staffId
+                }
+            },
+
+            // 1. Sort so periods appear in correct order
+            { $sort: { year: 1, classes: 1, day: 1, periodNo: 1 } },
+
+            // 2. Group by year + class + day
+            {
+                $group: {
+                    _id: {
+                        year: "$year",
+                        classes: "$classes",
+                        day: "$day"
+                    },
+                    periods: {
+                        $push: {
+                            periodNo: "$periodNo",
+                            startTime: "$startTime",
+                            endTime: "$endTime",
+                            subject: "$subject",
+                            staff: "$staff"
+                        }
+                    }
+                }
+            },
+
+            // 3. Group by year + class
+            {
+                $group: {
+                    _id: {
+                        year: "$_id.year",
+                        classes: "$_id.classes"
+                    },
+                    days: {
+                        $push: {
+                            day: "$_id.day",
+                            periods: "$periods"
+                        }
+                    }
+                }
+            },
+
+            // 4. Group by year
+            {
+                $group: {
+                    _id: "$_id.year",
+                    classes: {
+                        $push: {
+                            class: "$_id.classes",
+                            days: "$days"
+                        }
+                    }
+                }
+            },
+
+            // 5. Beautify output
+            {
+                $project: {
+                    _id: 0,
+                    year: "$_id",
+                    classes: 1
+                }
+            }
+        ]);
+        console.log("Timetable:::", timetable)
         if (!timetable.length) {
             return res.status(404).json({
                 success: false,
@@ -529,6 +557,122 @@ router.get("/fetchCurrentHod", async (req, res) => {
     }
 });
 
+router.get('/fetch-tutortimetable', isAuth, async (req, res) => {
+    try {
+        const staffId = String(req.session.user._id);   // logged in staff
+        console.log("StaffID", staffId)
+        if (!staffId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const fetchTutor = await UserModel.findOne({ _id: staffId })
+        const fetchYear = await Year.findOne({ _id: fetchTutor.year[0] })
+        if (!fetchYear)
+            return res.status(402).json({
+                success: false, message: "There is no year for this Deptarment"
+            });
+
+        const fetchClass = await Classes.findOne({ _id: fetchTutor.class[0] })
+        if (!fetchYear)
+            return res.status(402).json({
+                success: false, message: "There is no year for this Deptarment"
+            });
+        const timetable = await Timetable.aggregate([
+
+            // 🔹 0. FILTER BY YEAR (only change needed)
+            {
+                $match: {
+                    year: String(fetchYear._id),
+                    classes: String(fetchClass._id)
+                }
+            },
+
+            // 1. Sort so periods appear in correct order
+            { $sort: { year: 1, classes: 1, day: 1, periodNo: 1 } },
+
+            // 2. Group by year + class + day
+            {
+                $group: {
+                    _id: {
+                        year: "$year",
+                        classes: "$classes",
+                        day: "$day"
+                    },
+                    periods: {
+                        $push: {
+                            periodNo: "$periodNo",
+                            startTime: "$startTime",
+                            endTime: "$endTime",
+                            subject: "$subject",
+                            staff: "$staff"
+                        }
+                    }
+                }
+            },
+
+            // 3. Group by year + class
+            {
+                $group: {
+                    _id: {
+                        year: "$_id.year",
+                        classes: "$_id.classes"
+                    },
+                    days: {
+                        $push: {
+                            day: "$_id.day",
+                            periods: "$periods"
+                        }
+                    }
+                }
+            },
+
+            // 4. Group by year
+            {
+                $group: {
+                    _id: "$_id.year",
+                    classes: {
+                        $push: {
+                            class: "$_id.classes",
+                            days: "$days"
+                        }
+                    }
+                }
+            },
+
+            // 5. Beautify output
+            {
+                $project: {
+                    _id: 0,
+                    year: "$_id",
+                    classes: 1
+                }
+            }
+        ]);
+        console.log("Timetable:::", timetable)
+        if (!timetable.length) {
+            return res.status(404).json({
+                success: false,
+                message: "No Timetable found for the staff"
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Staff timetable fetched",
+            timetable
+        });
+
+    } catch (err) {
+        console.log("Timetable fetch error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to load timetable"
+        });
+    }
+});
+
 
 
 
@@ -629,6 +773,7 @@ router.get('/fetch-alerts', async (req, res) => {
         else if (user.role === "staff" || user.role === "tutor") {
             alerts = await Alert.find({
                 department: user.department,
+                year: user.year
             }).sort({ date: -1 });
         }
 
