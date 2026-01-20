@@ -151,6 +151,7 @@ AuthRouter.post("/register", async (req, res) => {
             classes,
             year
         } = req.body;
+        
 
         // 1️⃣ Validation
         if (!fullname || !email || !contact || !password || !gender) {
@@ -159,7 +160,7 @@ AuthRouter.post("/register", async (req, res) => {
                 message: "Please provide all required details"
             });
         }
-        console.log(fullname, email, contact, password, gender, classes, year, isTutor)
+        console.log(fullname, email, contact, password, gender, classes, year, isTutor, parentEmail)
 
         // 2️⃣ Check existing user
         const fetchUser = await UserModel.findOne({
@@ -237,22 +238,22 @@ AuthRouter.post("/register", async (req, res) => {
             if (Array.isArray(yearIds)) newUser.year = yearIds;
         }
 
-       
+
         // 7️⃣ Save user
         const saveUser = await UserModel.create(newUser);
 
-            if (!saveUser) {
-                return res.status(500).json({
-                    success: false,
-                    message: "Failed to create student"
-                });
-            }
-
-            return res.status(201).json({
-                success: true,
-                message: "User registered successfully",
+        if (!saveUser) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to create student"
             });
-     
+        }
+
+        return res.status(201).json({
+            success: true,
+            message: "User registered successfully",
+        });
+
     } catch (err) {
         console.error("Error in Register:", err);
         return res.status(500).json({
@@ -311,12 +312,12 @@ AuthRouter.get('/logout', isAuth, async (req, res) => {
 AuthRouter.get("/fetchusers", async (req, res) => {
     try {
         const users = await UserModel.find({});
-        if (!users){
-          return res.json({success : false , message : ""})
+        if (!users) {
+            return res.json({ success: false, message: "" })
         }
         return res.json({ success: true, count: users.length, users });
     } catch (error) {
-        return res.status(500).json({success: false,message: "Server error"});
+        return res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
