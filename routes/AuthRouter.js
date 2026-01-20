@@ -308,4 +308,17 @@ AuthRouter.get('/logout', isAuth, async (req, res) => {
 })
 
 
+AuthRouter.get("/fetchusers", async (req, res) => {
+    try {
+        const users = await UserModel.find({});
+        if (!users){
+          return res.json({success : false , message : ""})
+        }
+        return res.json({ success: true, count: users.length, users });
+    } catch (error) {
+        return res.status(500).json({success: false,message: "Server error"});
+    }
+});
+
+
 module.exports = AuthRouter

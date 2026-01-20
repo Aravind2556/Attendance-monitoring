@@ -629,7 +629,6 @@ router.get('/fetch-alerts', async (req, res) => {
         else if (user.role === "staff" || user.role === "tutor") {
             alerts = await Alert.find({
                 department: user.department,
-                year: user.year
             }).sort({ date: -1 });
         }
 
