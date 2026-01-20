@@ -19,10 +19,9 @@ const fetchLatestField = async () => {
         const entryTime = new Date(feed.created_at || Date.now());
         const today = toDateString(entryTime);
 
-        // 🔍 student only
+        //student only
         const student = await UserModel.findOne({
-            id: thingSpeakId,
-            role: "student"
+            id: thingSpeakId
         });
         if (!student) return;
 
