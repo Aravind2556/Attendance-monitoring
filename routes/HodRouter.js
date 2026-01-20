@@ -47,9 +47,11 @@ const router = express.Router();
 
 router.post('/create-timetable', isAuth, async (req, res) => {
     try {
+        console.log("It works")
         const { day, periodNo, startTime, endTime, year, classes, subject, staff } = req.body;
 
         console.log("Create Timetable Payload:", req.body);
+
 
         if (
             !day ||
@@ -77,7 +79,7 @@ router.post('/create-timetable', isAuth, async (req, res) => {
         }
 
         const newTable = new Timetable({
-            day,
+            day: day.toLowerCase(),
             periodNo,
             startTime,
             endTime,

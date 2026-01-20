@@ -11,11 +11,11 @@ const timetableSchema = new mongoose.Schema(
         startTime: { type: String, required: true },
         endTime: { type: String, required: true },
 
-        department: String,
-        year: String,
+        department: {type:String},
+        year: {type:String},
         classes: [{ type: String }],
 
-        subject: String,
+        subject: {type:String},
 
         staff: {
             id: String,
