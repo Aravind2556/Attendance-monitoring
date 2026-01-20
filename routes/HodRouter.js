@@ -5,6 +5,7 @@ const TimeTable = require("../models/TimeTable");
 const UserModel = require("../models/User");
 const Department = require("../models/Department");
 const Alert = require("../models/Alert")
+const Year = require('../models/Year')
 
 const router = express.Router();
 
@@ -113,23 +114,84 @@ router.post('/create-timetable', isAuth, async (req, res) => {
 
 
 
-router.get('/fetch-timetable', isAuth, async (req, res) => {
+router.get('/fetch-timetable/:year', isAuth, async (req, res) => {
     try {
         if (req.session.user.role !== "hod") {
             return res.status(403).json({ success: false, message: "Access denied" });
         }
 
+        const { year } = req.params; // 👈 year from URL
+
+        const fetchYear = await Year.findOne({ year: year })
+
+
         const timetable = await Timetable.aggregate([
 
-            // 1. Sort so periods appear in correct order
-            { $sort: { year: 1, class: 1, day: 1, periodNo: 1 } },
+            // 1️⃣ Match year
+            {
+                $match: { year }
+            },
 
-            // 2. Group by year + class + day
+            // 2️⃣ Unwind classes array
+            {
+                $unwind: "$classes"
+            },
+
+            // 3️⃣ Convert class string → ObjectId
+            {
+                $addFields: {
+                    classId: { $toObjectId: "$classes" }
+                }
+            },
+
+            // 4️⃣ Lookup class
+            {
+                $lookup: {
+                    from: "classes",
+                    localField: "classId",
+                    foreignField: "_id",
+                    as: "class"
+                }
+            },
+
+            // 5️⃣ Flatten class array
+            {
+                $unwind: "$class"
+            },
+
+            // 6️⃣ Add weekday order
+            {
+                $addFields: {
+                    dayOrder: {
+                        $switch: {
+                            branches: [
+                                { case: { $eq: ["$day", "monday"] }, then: 1 },
+                                { case: { $eq: ["$day", "tuesday"] }, then: 2 },
+                                { case: { $eq: ["$day", "wednesday"] }, then: 3 },
+                                { case: { $eq: ["$day", "thursday"] }, then: 4 },
+                                { case: { $eq: ["$day", "friday"] }, then: 5 }
+                            ],
+                            default: 99
+                        }
+                    }
+                }
+            },
+
+            // 7️⃣ Sort (Class → Day → Period)
+            {
+                $sort: {
+                    "class.section": 1,
+                    dayOrder: 1,
+                    periodNo: 1
+                }
+            },
+
+            // 8️⃣ Group by Year + Class + Day
             {
                 $group: {
                     _id: {
                         year: "$year",
-                        class: "$class",
+                        class: "$class.section",
                         day: "$day"
                     },
                     periods: {
@@ -144,7 +206,7 @@ router.get('/fetch-timetable', isAuth, async (req, res) => {
                 }
             },
 
-            // 3. Group by year + class
+            // 9️⃣ Group by Year + Class
             {
                 $group: {
                     _id: {
@@ -160,7 +222,7 @@ router.get('/fetch-timetable', isAuth, async (req, res) => {
                 }
             },
 
-            // 4. Group by year
+            // 🔟 Group by Year
             {
                 $group: {
                     _id: "$_id.year",
@@ -173,7 +235,7 @@ router.get('/fetch-timetable', isAuth, async (req, res) => {
                 }
             },
 
-            // 5. Beautify output
+            // 1️⃣1️⃣ Final output
             {
                 $project: {
                     _id: 0,
@@ -181,10 +243,12 @@ router.get('/fetch-timetable', isAuth, async (req, res) => {
                     classes: 1
                 }
             }
-        ])
+        ]);
 
+
+        console.log("Timetable is:", timetable)
         if (!timetable.length) {
-            return res.status(403).json({ success: false, message: "No Timetable found" });
+            return res.status(404).json({ success: false, message: "No Timetable found for this year" });
         }
 
         return res.status(200).json({
