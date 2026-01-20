@@ -4,6 +4,7 @@ const isAuth = require("../middleware/isAuth");
 const TimeTable = require("../models/TimeTable");
 const UserModel = require("../models/User");
 const Department = require("../models/Department");
+const Alert = require("../models/Alert")
 
 const router = express.Router();
 
@@ -85,7 +86,7 @@ router.post('/create-timetable', isAuth, async (req, res) => {
             endTime,
             department: req.session.user.department,
             year,
-            class: classes,
+            classes,
             subject,
             staff: {
                 id: fetchStaff._id,
@@ -347,6 +348,64 @@ router.get('/staff/:id', isAuth, async (req, res) => {
     }
 })
 
+
+router.get('/fetchstudenttimetable', async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        // Find logged-in student
+        const student = await UserModel.findOne({
+            _id: req.session.user._id,
+            role: "student"
+        });
+
+        console.log("student", student)
+
+        if (!student) {
+            return res.json({
+                success: false,
+                message: "Student not found"
+            });
+        }
+
+        // Fetch timetable based on student details
+        const timetable = await TimeTable.find({
+            department: student.department,
+
+            year: Array.isArray(student.year)
+                ? { $in: student.year }
+                : student.year,
+
+            classes: {
+                $in: Array.isArray(student.class)
+                    ? student.class
+                    : [student.class]
+            }
+        });
+
+        console.log("timetable", timetable)
+
+
+        return res.json({
+            success: true,
+            timetable
+        });
+
+    } catch (err) {
+        console.log("Timetable fetch error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Error in fetch student timetable"
+        });
+    }
+});
+
+
 router.get('/fetch-students', isAuth, async (req, res) => {
     try {
         const fetchStuents = await UserModel.find({ role: 'student' })
@@ -480,6 +539,57 @@ router.get("/fetchtimetables", async (req, res) => {
     }
 });
 
+
+
+router.get('/fetch-alerts', async (req, res) => {
+    try {
+        const user = req.session.user;
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        let alerts = [];
+
+        // 🎓 STUDENT → own alerts only
+        if (user.role === "student") {
+            alerts = await Alert.find({
+                studentId: user._id
+            }).sort({ date: -1 });
+        }
+
+        // 👨‍🏫 STAFF / TUTOR → department + year
+        else if (user.role === "staff" || user.role === "tutor") {
+            alerts = await Alert.find({
+                department: user.department,
+                year: user.year
+            }).sort({ date: -1 });
+        }
+
+        // 🧑‍💼 HOD → department wise (all years)
+        else if (user.role === "hod") {
+            alerts = await Alert.find({
+                department: user.department
+            }).sort({ date: -1 });
+        }
+
+        return res.json({
+            success: true,
+            count: alerts.length,
+            alerts
+        });
+
+    } catch (err) {
+        console.log("Fetch alert error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching alerts"
+        });
+    }
+});
 
 
 
