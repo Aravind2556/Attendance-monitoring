@@ -226,7 +226,7 @@ AuthRouter.post("/register", async (req, res) => {
         ];
 
         if (registerNumber) newUser.registerNumber = registerNumber;
-        if (parentEmail) newUser.parentEmail = parentEmail;
+        if (parentEmail) newUser.parentNumber = Number(parentEmail);
         if (isTutor) newUser.isTutor = isTutor;
 
         if (classes) newUser.class = classes
