@@ -8,6 +8,22 @@ const { sendParentMail, sendParentSMS } = require("../utils/sendMail");
 const markAbsenteesAfter0915 = async () => {
     const now = new Date();
     const today = toDateString(now);
+    const formatPhone = (num) => {
+        if (!num) return null;
+
+        // remove spaces, dashes
+        num = num.replace(/\D/g, '');
+
+        // remove leading 0
+        if (num.startsWith('0')) num = num.slice(1);
+
+        // if already has country code
+        if (num.startsWith('91')) return `+${num}`;
+
+        return `+91${num}`;
+    };
+
+    
 
     // only after 09:15
     if (now.getHours() < 9 || (now.getHours() === 9 && now.getMinutes() < 15)) {
@@ -48,7 +64,7 @@ const markAbsenteesAfter0915 = async () => {
             });
 
             await sendParentSMS({
-                to: stu?.parentNumber,
+                to: formatPhone(stu?.parentNumber),
                 studentName: stu?.fullname,
                 date: today
             });

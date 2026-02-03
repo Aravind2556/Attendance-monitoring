@@ -37,7 +37,7 @@ const transporter = nodemailer.createTransport({
 
 
 const sendParentSMS = ({ to, studentName, date }) => {
-console.log("SMS is sends")
+console.log("SMS called:",to, studentName, date)
     const body = `Dear Parent,
 
 This is to inform you that your ward ${studentName}
@@ -55,7 +55,7 @@ College Attendance System`
             to: to
         })
         .then(message => {
-            console.log(message.sid)
+            console.log("SMS send:",message.sid)
         })
         .catch(err => {
             console.error("Error sending SMS:", err)

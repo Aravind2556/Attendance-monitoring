@@ -6,7 +6,8 @@ const UserModel = require("../models/User");
 const Department = require("../models/Department");
 const Alert = require("../models/Alert")
 const Year = require('../models/Year')
-const Classes = require('../models/Class')
+const Classes = require('../models/Class');
+const { sendParentSMS } = require("../utils/sendMail");
 
 const router = express.Router();
 
@@ -725,6 +726,13 @@ router.get('/fetch-alerts', async (req, res) => {
             alerts = await Alert.find({
                 department: user.department
             }).sort({ date: -1 });
+            // await sendParentSMS({
+            //     to: '+918438919248',
+            //     // to: '+919952497638',
+            //     studentName: 'Keerthi',
+            //     date: new Date()
+            // });
+
         }
 
         return res.json({
