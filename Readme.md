@@ -1,8 +1,15 @@
-MongoDBURI = ""
+MongoDBURI = 
 port = 4000
 SessionKey='Sk-Key'
-ThinkSpeak_URL=https://api.thingspeak.com/channels/3165131/feeds.json?api_key=9LCWBMTKER3RNXHV&results
+ThinkSpeak_URL=
 
-ALERT_EMAIL=""
-ALERT_EMAIL_PASSWORD=""
-ALERT_TO=""
+MAIL_USER=
+MAIL_PASS=
+
+# SMS_API = c71cb932d5b6630b8db97f3b4efea5bb-33847c10-8fbb-4b3e-ab39-40388949ff4a
+# SMS_Snder = 447491163443
+
+twilioServiceSID=
+twilioAuthToken=
+twilioSID =
+# ALERT_TO=""
